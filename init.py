@@ -7,6 +7,7 @@ import csv
 import easygui
 import matplotlib
 import sympy
+import json
 
 def get_magnetic_field(i, rx, ry, mu0=4*pi*1e-7, mu=1):
     r = sqrt(rx**2 + ry**2)
@@ -28,13 +29,16 @@ class Conductor():
     def magnetic_field(self, x, y):
         Bx, By = get_magnetic_field(self.i, x-self.x, y-self.y)
         return Bx, By
+    def __str__(self):
+        s = {'x': self.x, 'y':self.y, 'i': self.i}
+        return json.dumps(s)
 
 class ConductorPlane():
     Bxx = []
     Byy = []
     Babs = []
     conductors = []
-    lookup_table = []
+    lookup_table = {}
     def __init__(self, x, y):
         self.Babs = zeros((len(x), len(y)))
         self.Bxx = zeros((len(x), len(y)))
@@ -42,15 +46,24 @@ class ConductorPlane():
     def add_conductor(self, c):
         self.conductors.append(c)
     def get_magnetic_field(self):
-        Bxx = self.Bxx
-        Byy = self.Byy
-        Babs = self.Babs
+        lookup_table = self.lookup_table
+        Bxx = zeros(shape(self.Bxx))
+        Byy = zeros(shape(self.Byy))
         for c in self.conductors:
-            for i in range(0, len(x)):
-                for j in range (0, len(y)):
-                    Bx, By = c.magnetic_field(x[i], y[j])
-                    Bxx[i,j] += Bx
-                    Byy[i,j] += By
+            cn = str(c)
+            if cn in lookup_table:
+                Bx = lookup_table[cn]['Bx']
+                By = lookup_table[cn]['By']
+            else:
+                Bx = zeros(shape(self.Bxx))
+                By = zeros(shape(self.Byy))
+                for i in range(0, len(x)):
+                    for j in range (0, len(y)):
+                        Bx[i,j], By[i,j] = c.magnetic_field(x[i], y[j])
+                lookup_table[cn] = {'Bx': Bx, 'By': By}
+            Bxx += Bx
+            Byy += By
+        Babs = zeros(shape(self.Babs))
         for i in range(0, len(x)):
             for j in range(0, len(y)):
                 Babs[i,j] = sqrt(Bxx[i,j]**2 + Byy[i,j]**2)
