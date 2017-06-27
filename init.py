@@ -45,6 +45,20 @@ class ConductorPlane():
         self.Byy = zeros((len(x), len(y)))
     def add_conductor(self, c):
         self.conductors.append(c)
+    def remove_conductor(self, x):
+        if type(x) == Conductor:
+            if x in self.conductors:
+                self.conductors.remove(x)
+            else:
+                raise Warning('No such conductor in the system!')
+        elif type(x) == str:
+            for c in self.conductors:
+                if c.name == x:
+                    self.conductors.remove(c)
+                else:
+                    raise Warning('No such conductor in the system!')
+        else:
+            raise ValueError('Cannot work out what you want to delete.')
     def get_magnetic_field(self):
         lookup_table = self.lookup_table
         Bxx = zeros(shape(self.Bxx))
