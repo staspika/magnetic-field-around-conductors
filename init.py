@@ -9,43 +9,61 @@ import matplotlib
 import sympy
 import json
 
+
 def get_magnetic_field(i, rx, ry, mu0=4*pi*1e-7, mu=1):
     r = sqrt(rx**2 + ry**2)
     B = mu0*mu*i/r
     By = B*rx/r
     Bx = -B*ry/r
-    return Bx, By    
+    return Bx, By
+
 
 class Conductor():
+
     x = 0
     y = 0
     i = 0
     name = ''
+
     def __init__(self, x=0, y=0, i=0, name=''):
+
         self.x = x
         self.y = y
         self.i = i
         self.name = name
+
     def magnetic_field(self, x, y):
+
         Bx, By = get_magnetic_field(self.i, x-self.x, y-self.y)
         return Bx, By
+
     def __str__(self):
+
         s = {'x': self.x, 'y':self.y, 'i': self.i}
         return json.dumps(s)
 
+
 class ConductorPlane():
+
+
     Bxx = []
     Byy = []
     Babs = []
     conductors = []
     lookup_table = {}
+
     def __init__(self, x, y):
+
         self.Babs = zeros((len(x), len(y)))
         self.Bxx = zeros((len(x), len(y)))
         self.Byy = zeros((len(x), len(y)))
+
     def add_conductor(self, c):
+
         self.conductors.append(c)
+
     def remove_conductor(self, x):
+
         if type(x) == Conductor:
             if x in self.conductors:
                 self.conductors.remove(x)
@@ -59,7 +77,9 @@ class ConductorPlane():
                     raise Warning('No such conductor in the system!')
         else:
             raise ValueError('Cannot work out what you want to delete.')
+
     def get_magnetic_field(self):
+
         lookup_table = self.lookup_table
         Bxx = zeros(shape(self.Bxx))
         Byy = zeros(shape(self.Byy))
@@ -72,18 +92,20 @@ class ConductorPlane():
                 Bx = zeros(shape(self.Bxx))
                 By = zeros(shape(self.Byy))
                 for i in range(0, len(x)):
-                    for j in range (0, len(y)):
-                        Bx[i,j], By[i,j] = c.magnetic_field(x[i], y[j])
+                    for j in range(0, len(y)):
+                        Bx[i, j], By[i, j] = c.magnetic_field(x[i], y[j])
                 lookup_table[cn] = {'Bx': Bx, 'By': By}
             Bxx += Bx
             Byy += By
         Babs = zeros(shape(self.Babs))
         for i in range(0, len(x)):
             for j in range(0, len(y)):
-                Babs[i,j] = sqrt(Bxx[i,j]**2 + Byy[i,j]**2)
+                Babs[i, j] = sqrt(Bxx[i, j]**2 + Byy[i, j]**2)
         return Babs, Bxx, Byy
+
     def read_from_file(self, filename):
-        with open (filename) as csvfile:
+
+        with open(filename) as csvfile:
             reader = csv.DictReader(csvfile, skipinitialspace=True)
             for row in reader:
                 x = float(sympy.sympify(row['x']))
